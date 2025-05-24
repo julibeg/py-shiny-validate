@@ -3188,7 +3188,7 @@
     if (window.Shiny) {
       Shiny.addCustomMessageHandler("validation-jcheng5", function(message) {
         var boundInputsMap = getBoundInputsMap();
-        
+
         for (var _i = 0, _Object$entries = Object.entries(message); _i < _Object$entries.length; _i++) {
           var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2), key = _Object$entries$_i[0], value = _Object$entries$_i[1];
           var input = boundInputsMap.get(key);
@@ -3199,11 +3199,11 @@
               let retries = 0;
               const maxRetries = 5;
               const initialDelay = 50;
-          
+
               function attemptValidation() {
                 var attemptNumber = retries + 1;
                 var nextRetryDelay = initialDelay * Math.pow(1.4, retries);
-                
+
                 // check if element exists in DOM
                 var elementById = document.getElementById(currentKey);
                 if (!elementById) {
@@ -3214,7 +3214,7 @@
                 // try to get current bound inputs
                 var currentBoundInputsMap = getBoundInputsMap();
                 var currentInputFromMap = currentBoundInputsMap.get(currentKey);
-          
+
                 if (currentInputFromMap && currentInputFromMap.el && currentInputFromMap.binding) {
                   if (currentValue === null) {
                     clearInvalid4(currentInputFromMap.el, currentInputFromMap.binding, currentInputFromMap.id);
@@ -3226,13 +3226,13 @@
                   setTimeout(attemptValidation, nextRetryDelay);
                 }
               }
-              
+
               setTimeout(attemptValidation, initialDelay); 
             })(key, value);
-            
+
             continue; 
           }
-          
+
           // Original logic if input was found immediately
           if (value === null) {
             clearInvalid4(input.el, input.binding, input.id);
