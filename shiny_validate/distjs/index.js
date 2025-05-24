@@ -3227,10 +3227,10 @@
                 }
               }
 
-              setTimeout(attemptValidation, initialDelay); 
+              setTimeout(attemptValidation, initialDelay);
             })(key, value);
 
-            continue; 
+            continue;
           }
 
           // Original logic if input was found immediately

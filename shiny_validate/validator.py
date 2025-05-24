@@ -1,5 +1,6 @@
 from shiny import reactive, ui, Session
 from shiny.session import session_context
+from shiny.types import SilentException
 from .deps import html_deps
 from typing import Optional, Callable
 import datetime
@@ -41,7 +42,18 @@ class InputValidator:
         self.__validator_infos: reactive.Value[
             dict[str, InputValidator]
         ] = reactive.Value({})
-        self.__retritter_on: list[str] = retrigger_on or []
+        # `retrigger_on` is a list of input IDs that should trigger a re-validation when
+        # they change
+        if retrigger_on is None:
+            retrigger_on = []
+        elif isinstance(retrigger_on, str):
+            retrigger_on = [retrigger_on]
+        elif not (
+            isinstance(retrigger_on, list)
+            and all(isinstance(item, str) for item in retrigger_on)
+        ):
+            raise ValueError("`retrigger_on` must be a string or a list of strings")
+        self.__retrigger_on: list[str] = retrigger_on or []
 
         ui.insert_ui(
             html_deps,
@@ -105,41 +117,25 @@ class InputValidator:
 
                 @reactive.Effect(priority=self.__priority)
                 async def observer():
-                    # Try to access ALL available inputs to create dependencies
-                    # This ensures we react to any input that might control dynamic rendering
-                    try:
-                        # Get all input IDs that currently exist
-                        all_input_ids = []
-
-                        for control_element_id in self.__retritter_on:
-                            try:
-                                self.__session.input[control_element_id]()
-                                all_input_ids.append(control_element_id)
-                            except:
-                                pass
-
-                    except Exception:
-                        pass
-
-                    # Check if our rule inputs exist
-                    with reactive.isolate():
-                        rules = self.__rules.get()
-
-                    should_validate = True
-                    for input_id in rules.keys():
-                        clean_id = (
-                            input_id.split("-")[-1] if "-" in input_id else input_id
-                        )
+                    # try to access the re-trigger inputs to create reactive
+                    # dependencies (i.e. make sure this function is re-run when any of
+                    # the elements in `self.__retrigger_on` changes)
+                    controls_present = False
+                    for control_element_id in self.__retrigger_on:
                         try:
-                            self.__session.input[clean_id]()
-                        except:
-                            should_validate = False
-                            break
+                            self.__session.input[control_element_id]()
+                            # a control element is present which means that the UI / DOM
+                            # could have changed (and we should give it some time to
+                            # settle before validating below)
+                            controls_present = True
+                        except SilentException:
+                            pass
 
-                    if should_validate:
-                        results = self.validate()
-                    else:
-                        results = {}
+                    if controls_present:
+                        # wait a bit to let the UI settle down
+                        await asyncio.sleep(0.05)
+
+                    results = self.validate()
 
                     await self.__session.send_custom_message(
                         "validation-jcheng5", results
