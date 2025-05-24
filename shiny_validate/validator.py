@@ -103,7 +103,56 @@ class InputValidator:
 
                 @reactive.Effect(priority=self.__priority)
                 async def observer():
-                    results = self.validate()
+                    # Try to access ALL available inputs to create dependencies
+                    # This ensures we react to any input that might control dynamic rendering
+                    try:
+                        # Get all input IDs that currently exist
+                        all_input_ids = []
+
+                        # Common control input patterns
+                        potential_controls = [
+                            "checkbox",
+                            "show_input",
+                            "toggle",
+                            "enable",
+                            "show",
+                            "display",
+                            "visible",
+                            "render",
+                            "dynamic",
+                            "conditional",
+                        ]
+
+                        for control_name in potential_controls:
+                            try:
+                                self.__session.input[control_name]()
+                                all_input_ids.append(control_name)
+                            except:
+                                pass
+
+                    except Exception:
+                        pass
+
+                    # Check if our rule inputs exist
+                    with reactive.isolate():
+                        rules = self.__rules.get()
+
+                    should_validate = True
+                    for input_id in rules.keys():
+                        clean_id = (
+                            input_id.split("-")[-1] if "-" in input_id else input_id
+                        )
+                        try:
+                            self.__session.input[clean_id]()
+                        except:
+                            should_validate = False
+                            break
+
+                    if should_validate:
+                        results = self.validate()
+                    else:
+                        results = {}
+
                     await self.__session.send_custom_message(
                         "validation-jcheng5", results
                     )
