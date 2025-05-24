@@ -3188,12 +3188,10 @@
     if (window.Shiny) {
       Shiny.addCustomMessageHandler("validation-jcheng5", function(message) {
         var boundInputsMap = getBoundInputsMap();
-
         for (var _i = 0, _Object$entries = Object.entries(message); _i < _Object$entries.length; _i++) {
           var _Object$entries$_i = _slicedToArray(_Object$entries[_i], 2), key = _Object$entries$_i[0], value = _Object$entries$_i[1];
           var input = boundInputsMap.get(key);
           if (!input) {
-
             // re-attempt a few times with increasing backoff
             (function(currentKey, currentValue) {
               let retries = 0;
@@ -3226,10 +3224,8 @@
                   setTimeout(attemptValidation, nextRetryDelay);
                 }
               }
-
               setTimeout(attemptValidation, initialDelay);
             })(key, value);
-
             continue;
           }
 
