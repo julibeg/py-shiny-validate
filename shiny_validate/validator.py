@@ -28,6 +28,7 @@ class InputValidator:
     def __init__(
         self,
         priority=1000,
+        retrigger_on: Optional[list[str]] = None,
     ):
         self.__session = require_active_session(get_current_session())
         self.__priority: int = priority
@@ -40,6 +41,7 @@ class InputValidator:
         self.__validator_infos: reactive.Value[
             dict[str, InputValidator]
         ] = reactive.Value({})
+        self.__retritter_on: list[str] = retrigger_on or []
 
         ui.insert_ui(
             html_deps,
@@ -109,24 +111,10 @@ class InputValidator:
                         # Get all input IDs that currently exist
                         all_input_ids = []
 
-                        # Common control input patterns
-                        potential_controls = [
-                            "checkbox",
-                            "show_input",
-                            "toggle",
-                            "enable",
-                            "show",
-                            "display",
-                            "visible",
-                            "render",
-                            "dynamic",
-                            "conditional",
-                        ]
-
-                        for control_name in potential_controls:
+                        for control_element_id in self.__retritter_on:
                             try:
-                                self.__session.input[control_name]()
-                                all_input_ids.append(control_name)
+                                self.__session.input[control_element_id]()
+                                all_input_ids.append(control_element_id)
                             except:
                                 pass
 
